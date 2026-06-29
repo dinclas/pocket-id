@@ -105,10 +105,14 @@
 		{/if}
 	</div>
 {:else}
-	<!-- Background image: fixed full-screen layer so it covers the entire screen,
-	     including behind the status bar and browser controls on mobile (iOS) -->
+	<!-- Background image: fixed layer pinned to the top and sized to the large
+	     viewport (h-lvh) so it covers the entire screen, including behind the
+	     status bar and browser controls on mobile (iOS). A `bottom`/`inset-0`
+	     constraint must be avoided here: on iOS Safari it would shrink the layer
+	     to the small (visual) viewport, leaving the area behind the toolbars
+	     uncovered. -->
 	<div
-		class="fixed inset-0 -z-10 bg-cover bg-center"
+		class="fixed inset-x-0 top-0 -z-10 h-lvh bg-cover bg-center"
 		style="background-image: url({cachedBackgroundImage.getUrl()});"
 	></div>
 	<div class="flex min-h-dvh items-center justify-center text-center">
