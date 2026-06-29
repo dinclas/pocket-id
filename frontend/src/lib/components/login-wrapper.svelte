@@ -38,6 +38,37 @@
 	});
 
 	const isDesktop = new MediaQuery('(min-width: 1024px)');
+
+	// On mobile we paint the background image onto the <body> element. iOS Safari
+	// propagates the root/body background across the whole screen canvas, so it
+	// renders behind the status bar and the (transparent) browser controls,
+	// covering the entire screen. A regular positioned element can't reliably do
+	// this because `fixed`/viewport-unit heights are clamped to the visual
+	// viewport that sits between the system bars.
+	$effect(() => {
+		if (isDesktop.current || !backgroundImageExists) return;
+
+		const body = document.body;
+		const previous = {
+			image: body.style.backgroundImage,
+			size: body.style.backgroundSize,
+			position: body.style.backgroundPosition,
+			repeat: body.style.backgroundRepeat
+		};
+
+		body.style.backgroundImage = `url("${cachedBackgroundImage.getUrl()}")`;
+		body.style.backgroundSize = 'cover';
+		body.style.backgroundPosition = 'center';
+		body.style.backgroundRepeat = 'no-repeat';
+
+		return () => {
+			body.style.backgroundImage = previous.image;
+			body.style.backgroundSize = previous.size;
+			body.style.backgroundPosition = previous.position;
+			body.style.backgroundRepeat = previous.repeat;
+		};
+	});
+
 	let alternativeSignInButton = $state({
 		href: '/login/alternative',
 		label: m.alternative_sign_in_methods()
@@ -105,16 +136,9 @@
 		{/if}
 	</div>
 {:else}
-	<!-- Background image: fixed layer pinned to the top and sized to the large
-	     viewport (h-lvh) so it covers the entire screen, including behind the
-	     status bar and browser controls on mobile (iOS). A `bottom`/`inset-0`
-	     constraint must be avoided here: on iOS Safari it would shrink the layer
-	     to the small (visual) viewport, leaving the area behind the toolbars
-	     uncovered. -->
-	<div
-		class="fixed inset-x-0 top-0 -z-10 h-lvh bg-cover bg-center"
-		style="background-image: url({cachedBackgroundImage.getUrl()});"
-	></div>
+	<!-- The background image is painted onto <body> (see the $effect above) so it
+	     covers the whole screen on mobile, behind the status bar and browser
+	     controls. Here we only center the card over it. -->
 	<div class="flex min-h-dvh items-center justify-center text-center">
 		<Card.Root
 			class={{
