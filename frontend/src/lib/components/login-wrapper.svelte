@@ -105,10 +105,13 @@
 		{/if}
 	</div>
 {:else}
+	<!-- Background image: fixed full-screen layer so it covers the entire screen,
+	     including behind the status bar and browser controls on mobile (iOS) -->
 	<div
-		class="flex h-screen items-center justify-center bg-cover bg-center text-center"
+		class="fixed inset-0 -z-10 bg-cover bg-center"
 		style="background-image: url({cachedBackgroundImage.getUrl()});"
-	>
+	></div>
+	<div class="flex min-h-dvh items-center justify-center text-center">
 		<Card.Root
 			class={{
 				'mx-3 w-full max-w-md': true,
