@@ -39,36 +39,6 @@
 
 	const isDesktop = new MediaQuery('(min-width: 1024px)');
 
-	// On mobile we paint the background image onto the <body> element. iOS Safari
-	// propagates the root/body background across the whole screen canvas, so it
-	// renders behind the status bar and the (transparent) browser controls,
-	// covering the entire screen. A regular positioned element can't reliably do
-	// this because `fixed`/viewport-unit heights are clamped to the visual
-	// viewport that sits between the system bars.
-	$effect(() => {
-		if (isDesktop.current || !backgroundImageExists) return;
-
-		const body = document.body;
-		const previous = {
-			image: body.style.backgroundImage,
-			size: body.style.backgroundSize,
-			position: body.style.backgroundPosition,
-			repeat: body.style.backgroundRepeat
-		};
-
-		body.style.backgroundImage = `url("${cachedBackgroundImage.getUrl()}")`;
-		body.style.backgroundSize = 'cover';
-		body.style.backgroundPosition = 'center';
-		body.style.backgroundRepeat = 'no-repeat';
-
-		return () => {
-			body.style.backgroundImage = previous.image;
-			body.style.backgroundSize = previous.size;
-			body.style.backgroundPosition = previous.position;
-			body.style.backgroundRepeat = previous.repeat;
-		};
-	});
-
 	let alternativeSignInButton = $state({
 		href: '/login/alternative',
 		label: m.alternative_sign_in_methods()
@@ -136,9 +106,26 @@
 		{/if}
 	</div>
 {:else}
-	<!-- The background image is painted onto <body> (see the $effect above) so it
-	     covers the whole screen on mobile, behind the status bar and browser
-	     controls. Here we only center the card over it. -->
+	{#if backgroundImageExists}
+		<!--
+			Background image for mobile. It is an absolutely positioned, real DOM
+			element sized to the large viewport (h-lvh), anchored to the very top of
+			the screen. Combined with `viewport-fit=cover`, this makes the image
+			render edge-to-edge into the iOS safe areas: behind the status bar at the
+			top and behind the browser controls at the bottom.
+
+			A real element is required here. iOS Safari fills the safe-area insets
+			from the background *color* only, so painting the image on <body> (canvas
+			propagation) leaves the insets blank. And `position: fixed` is clamped to
+			the visual viewport between the system bars, so it can't reach the insets
+			either. An absolutely positioned element is laid out against the (cover)
+			layout viewport and does extend into the insets.
+		-->
+		<div
+			class="absolute inset-x-0 top-0 -z-10 h-lvh bg-cover bg-center"
+			style="background-image: url({cachedBackgroundImage.getUrl()});"
+		></div>
+	{/if}
 	<div class="flex min-h-dvh items-center justify-center text-center">
 		<Card.Root
 			class={{
